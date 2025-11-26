@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MovieLO - Series</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="logo.png">
+</head>
+<body>
+
+    <nav>
+        <div class="logo"><img src="logo.png" alt="MovieLO Logo"> Movie<span>LO</span></div>
+        <div class="nav-menu">
+            <a href="index.html">Home</a>
+            <a href="movies.html">Movies</a>
+            <a href="series.html" class="active">Series</a>
+            <a href="download.html">Download</a>
+            <a href="about.html">About Us</a>
+        </div>
+        <div>
+            <button class="btn-primary" style="padding: 8px 20px;" id="logout-btn">Logout</button>
+        </div>
+    </nav>
+
+    <div class="page-container">
+        
+        <aside class="sidebar">
+            <div class="filter-header-row">
+                <div class="filter-title"><i class="fas fa-filter"></i> Filters</div>
+                <div class="reset-btn" onclick="window.location.reload()">Reset</div>
+            </div>
+
+      <div class="filter-group">
+                <div class="group-title">Industry <i class="fas fa-chevron-up"></i></div>
+                
+                <label class="checkbox-item">
+                    <input type="radio" name="region" value="all" checked onchange="applyFilters()">
+                    <span class="checkmark"></span> All
+                </label>
+                <label class="checkbox-item">
+                    <input type="radio" name="region" value="gu" onchange="applyFilters()">
+                    <span class="checkmark"></span> Gujarati
+                </label>
+                <label class="checkbox-item">
+                    <input type="radio" name="region" value="hi" onchange="applyFilters()">
+                    <span class="checkmark"></span> Bollywood (Hindi)
+                </label>
+                
+                <label class="checkbox-item">
+                    <input type="radio" name="region" value="en" onchange="applyFilters()">
+                    <span class="checkmark"></span> Hollywood (English)
+                </label>
+
+                <label class="checkbox-item">
+                    <input type="radio" name="region" value="south" onchange="applyFilters()">
+                    <span class="checkmark"></span> South (Tamil, Telugu etc)
+                </label>
+            </div>
+
+            <div class="filter-group">
+                <div class="group-title">Genre <i class="fas fa-chevron-up"></i></div>
+                <div id="genre-list">
+                    </div>
+            </div>
+        </aside>
+
+    <main class="main-content">
+            <div class="content-header">
+                <div class="header-row">
+                    <div class="search-bar-wrapper">
+                        <i class="fas fa-search search-icon-inside"></i>
+                        <input type="text" id="search-input" class="main-search-input" placeholder="Search...">
+                    </div>
+                </div>
+            </div>
+
+            <div id="regional-rows-section">
+                
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h3 style="color:var(--primary); margin:0;">Bollywood Hits (Hindi)</h3>
+                    <span onclick="filterByRegion('hi')" style="cursor:pointer; font-size:0.85rem; color:#ccc; display:flex; align-items:center; gap:5px;">
+                        View All <i class="fas fa-arrow-right" style="font-size:0.7rem;"></i>
+                    </span>
+                </div>
+                <div class="film-strip" id="row-bollywood" style="position:relative; width:100%; margin-bottom:30px; border:none; background:transparent;"></div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h3 style="color:var(--primary); margin:0;">Hollywood Blockbusters</h3>
+                    <span onclick="filterByRegion('en')" style="cursor:pointer; font-size:0.85rem; color:#ccc; display:flex; align-items:center; gap:5px;">
+                        View All <i class="fas fa-arrow-right" style="font-size:0.7rem;"></i>
+                    </span>
+                </div>
+                <div class="film-strip" id="row-hollywood" style="position:relative; width:100%; margin-bottom:30px; border:none; background:transparent;"></div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h3 style="color:var(--primary); margin:0;">South Indian Action</h3>
+                    <span onclick="filterByRegion('south')" style="cursor:pointer; font-size:0.85rem; color:#ccc; display:flex; align-items:center; gap:5px;">
+                        View All <i class="fas fa-arrow-right" style="font-size:0.7rem;"></i>
+                    </span>
+                </div>
+                <div class="film-strip" id="row-south" style="position:relative; width:100%; margin-bottom:30px; border:none; background:transparent;"></div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h3 style="color:var(--primary); margin:0;">Gujarati Special</h3>
+                    <span onclick="filterByRegion('gu')" style="cursor:pointer; font-size:0.85rem; color:#ccc; display:flex; align-items:center; gap:5px;">
+                        View All <i class="fas fa-arrow-right" style="font-size:0.7rem;"></i>
+                    </span>
+                </div>
+                <div class="film-strip" id="row-gujarati" style="position:relative; width:100%; margin-bottom:30px; border:none; background:transparent;"></div>
+
+            </div>
+
+            <h2 style="margin-bottom: 20px; border-top:1px solid #333; padding-top:20px;" id="search-title">Explore All</h2>
+            <div class="results-grid" id="search-grid"></div>
+        </main>
+    </div>
+
+    <div id="view-details" class="details-container hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-dark); z-index:200; overflow-y:auto;">
+        <button onclick="document.getElementById('view-details').classList.add('hidden')" style="position:fixed; top:20px; right:20px; z-index:201; background:transparent; border:none; color:white; font-size:2rem; cursor:pointer;">&times;</button>
+        </div>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

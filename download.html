@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MovieLO - Downloads</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="logo.png">
+</head>
+<body>
+
+    <nav>
+        <div class="logo"><img src="logo.png" alt="MovieLO Logo"> Movie<span>LO</span></div>
+        <div class="nav-menu">
+            <a href="index.html">Home</a>
+            <a href="movies.html">Movies</a>
+            <a href="series.html">Series</a>
+            <a href="download.html" class="active">Downloads</a>
+            <a href="about.html">About Us</a>
+        </div>
+        <div>
+            <button class="btn-primary" style="padding: 8px 20px;" id="logout-btn">Logout</button>
+        </div>
+    </nav>
+
+    <div class="page-container" style="flex-direction: column; align-items: center;">
+        
+        <h1 style="margin-bottom: 20px;">Download Center</h1>
+
+        <div id="admin-panel" class="hidden auth-card" style="width: 100%; max-width: 600px; margin-bottom: 20px; border: 1px solid var(--primary);">
+            <h3 style="margin-bottom: 15px; color: var(--primary);"><i class="fas fa-user-shield"></i> Admin Panel</h3>
+            <div class="input-group">
+                <label>Movie Name</label>
+                <input type="text" id="movie-name" class="input-field" placeholder="E.g. Avengers Endgame">
+            </div>
+            <div class="input-group">
+                <label>Download Link</label>
+                <input type="text" id="movie-link" class="input-field" placeholder="Paste drive/cloud link here">
+            </div>
+            <button class="btn-primary" id="btn-add-download" style="width: 100%;">Add to List</button>
+        </div>
+
+        <div style="width: 100%; max-width: 800px; margin-bottom: 20px;">
+            <input type="text" id="download-search" class="input-field" placeholder="Search for a movie..." style="width: 100%; padding: 15px; border-radius: 10px; border: 1px solid #333; background: #15151a; color: white;">
+        </div>
+        <div id="downloads-list" style="width: 100%; max-width: 800px;">
+            <p style="text-align:center; color:#666;">Loading downloads...</p>
+        </div>
+
+    </div>
+
+    <script type="module" src="js/download.js"></script>
+</body>
+</html>

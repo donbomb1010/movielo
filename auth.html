@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreamO - Authentication</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="auth-body">
+
+    <div class="nav-brand" style="position:fixed; top:30px; left:30px;">
+        <div class="logo"><i class="fas fa-film"></i> Stream<span>O</span></div>
+    </div>
+
+    <div class="auth-card">
+        <div id="register-form">
+            <h2 style="margin-bottom: 10px;">Welcome!</h2>
+            <p style="color:var(--text-gray); margin-bottom: 30px;">Sign up to start streaming your favorites now!</p>
+            
+            <div style="display:flex; gap:10px;">
+                <div class="input-group">
+                    <label>First name</label>
+                    <input type="text" class="input-field" placeholder="Enter first name">
+                </div>
+                <div class="input-group">
+                    <label>Last name</label>
+                    <input type="text" class="input-field" placeholder="Enter last name">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Email Address</label>
+                <input type="email" id="reg-email" class="input-field" placeholder="Enter your email address">
+            </div>
+
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="reg-pass" class="input-field" placeholder="Create a password">
+            </div>
+
+            <button class="btn-primary" style="width:100%; margin-top:10px;" id="btn-signup">Create an account</button>
+            
+            <p style="text-align:center; margin-top:20px; color:var(--text-gray);">
+                Already have an account? <a href="#" onclick="toggleAuth()" style="color:var(--primary)">Log in</a>
+            </p>
+        </div>
+
+        <div id="login-form" class="hidden">
+            <h2 style="margin-bottom: 10px;">Welcome back!</h2>
+            <p style="color:var(--text-gray); margin-bottom: 30px;">Pick up where you left off.</p>
+            
+            <div class="input-group">
+                <label>Email</label>
+                <input type="email" id="login-email" class="input-field" placeholder="Enter your email">
+            </div>
+
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="login-pass" class="input-field" placeholder="Enter your password">
+            </div>
+
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px; font-size:0.8rem; color:var(--text-gray);">
+                <label><input type="checkbox"> Remember me</label>
+                <a href="#" style="color:white;">Forgot Password?</a>
+            </div>
+
+            <button class="btn-primary" style="width:100%;" id="btn-login">Login</button>
+            
+            <div class="social-login">
+                <div class="social-icon"><i class="fab fa-google"></i></div>
+                <div class="social-icon"><i class="fab fa-apple"></i></div>
+                <div class="social-icon"><i class="fab fa-facebook-f"></i></div>
+            </div>
+
+            <p style="text-align:center; margin-top:20px; color:var(--text-gray);">
+                Don't have an account? <a href="#" onclick="toggleAuth()" style="color:var(--primary)">Sign up</a>
+            </p>
+        </div>
+    </div>
+
+    <script type="module" src="js/auth-logic.js"></script>
+    <script>
+        function toggleAuth() {
+            document.getElementById('register-form').classList.toggle('hidden');
+            document.getElementById('login-form').classList.toggle('hidden');
+        }
+    </script>
+</body>
+</html>

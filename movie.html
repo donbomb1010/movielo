@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeonCinema - AI Movie Recommendations</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        'neon-blue': '#00f3ff',
+                        'neon-pink': '#ff00ff',
+                        'neon-purple': '#bc13fe',
+                        'dark-bg': '#0a0a0f',
+                        'card-bg': '#13131f'
+                    },
+                    animation: {
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'slide-up': 'slideUp 0.6s ease-out',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        glow: {
+                            '0%': { boxShadow: '0 0 5px #00f3ff, 0 0 10px #00f3ff' },
+                            '100%': { boxShadow: '0 0 20px #00f3ff, 0 0 30px #00f3ff' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0a0a0f;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0a0f; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00f3ff; 
+        }
+
+        /* Glassmorphism */
+        .glass {
+            background: rgba(19, 19, 31, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .glass-nav {
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0, 243, 255, 0.1);
+        }
+
+        /* Card Hover Effects */
+        .movie-card {
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .movie-card:hover {
+            transform: scale(1.05) translateY(-5px);
+            z-index: 10;
+            box-shadow: 0 10px 30px -10px rgba(0, 243, 255, 0.3);
+        }
+        .movie-card .poster-overlay {
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .movie-card:hover .poster-overlay {
+            opacity: 1;
+        }
+
+        /* Hero Animation */
+        .hero-bg {
+            mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%);
+            -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%);
+        }
+
+        /* Loading Skeleton Shimmer */
+        .skeleton {
+            background: #1f2937;
+            background-image: linear-gradient(to right, #1f2937 0%, #374151 20%, #1f2937 40%, #1f2937 100%);
+            background-repeat: no-repeat;
+            background-size: 800px 100%; 
+            animation: shimmer 1.5s infinite linear forwards; 
+        }
+        @keyframes shimmer {
+            0% { background-position: -400px 0; }
+            100% { background-position: 400px 0; }
+        }
+
+        /* Input Styling */
+        .search-input:focus {
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+            border-color: rgba(0, 243, 255, 0.5);
+        }
+
+        /* Hide Scrollbar for horizontal lists */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="glass-nav fixed w-full z-50 top-0 transition-all duration-300" id="navbar">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2 cursor-pointer" onclick="app.loadHome()">
+                <i class="fa-solid fa-film text-neon-blue text-2xl animate-pulse-slow"></i>
+                <h1 class="text-2xl font-bold tracking-wider text-white">NEON<span class="text-neon-blue">CINEMA</span></h1>
+            </div>
+            
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="#" onclick="app.loadHome()" class="hover:text-neon-blue transition-colors">Home</a>
+                <a href="#" onclick="app.renderWatchlist()" class="hover:text-neon-blue transition-colors">Watchlist</a>
+                
+                <!-- Auth Section -->
+                <div id="nav-auth-section" class="flex items-center space-x-4">
+                    <!-- Injected by JS -->
+                    <button onclick="app.toggleLoginModal()" class="hover:text-neon-blue transition-colors">Login</button>
+                </div>
+
+                <a href="#" onclick="app.toggleSettings()" class="hover:text-neon-blue transition-colors"><i class="fa-solid fa-gear"></i></a>
+            </div>
+
+            <!-- Mobile Menu Btn -->
+            <button class="md:hidden text-white text-xl" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-dark-bg border-t border-gray-800 p-4">
+            <a href="#" onclick="app.loadHome(); document.getElementById('mobile-menu').classList.add('hidden')" class="block py-2">Home</a>
+            <a href="#" onclick="app.renderWatchlist(); document.getElementById('mobile-menu').classList.add('hidden')" class="block py-2">Watchlist</a>
+            <a href="#" onclick="app.toggleLoginModal(); document.getElementById('mobile-menu').classList.add('hidden')" class="block py-2" id="mobile-login-btn">Login</a>
+            <a href="#" onclick="app.toggleSettings(); document.getElementById('mobile-menu').classList.add('hidden')" class="block py-2">Settings</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow pt-20">
+        
+        <!-- Hero Section -->
+        <div id="hero-section" class="relative w-full h-[500px] flex items-center justify-center overflow-hidden mb-10 group">
+            <!-- Dynamic Background Image -->
+            <div id="hero-bg" class="absolute inset-0 bg-cover bg-center transition-transform duration-[10s] transform scale-100 group-hover:scale-110 hero-bg opacity-40"></div>
+            
+            <div class="relative z-10 text-center px-4 max-w-3xl">
+                <h2 class="text-4xl md:text-6xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 animate-slide-up">
+                    Discover Your Next <span class="text-neon-blue">Obsession</span>
+                </h2>
+                <p class="text-gray-400 mb-8 text-lg animate-slide-up" style="animation-delay: 0.1s;">
+                    Search for a movie you love, and we'll handle the rest using our smart recommendation engine.
+                </p>
+                
+                <!-- Search Bar -->
+                <div class="relative max-w-lg mx-auto animate-slide-up" style="animation-delay: 0.2s;">
+                    <div class="relative">
+                        <i class="fa-solid fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <input 
+                            type="text" 
+                            id="search-input"
+                            placeholder="Type a movie name..." 
+                            class="w-full bg-gray-800/80 border border-gray-700 text-white pl-12 pr-4 py-4 rounded-full focus:outline-none search-input transition-all placeholder-gray-500"
+                            autocomplete="off"
+                        >
+                    </div>
+                    <!-- Autocomplete Dropdown -->
+                    <div id="search-results" class="absolute w-full mt-2 bg-card-bg border border-gray-800 rounded-xl shadow-2xl z-50 hidden max-h-96 overflow-y-auto">
+                        <!-- Results injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Container -->
+        <div class="container mx-auto px-4 md:px-8 pb-20">
+            
+            <!-- Dynamic Heading -->
+            <div class="flex justify-between items-end mb-6">
+                <h3 id="section-title" class="text-2xl font-bold border-l-4 border-neon-blue pl-4">Trending Now</h3>
+                <div id="genre-tags" class="hidden md:flex space-x-2 text-sm">
+                    <!-- Genre filters injected here -->
+                </div>
+            </div>
+
+            <!-- Movie Grid -->
+            <div id="movie-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                <!-- Movie Cards injected here -->
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="loader" class="hidden w-full flex justify-center py-10">
+                <div class="w-10 h-10 border-4 border-neon-blue border-t-transparent rounded-full animate-spin"></div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Movie Details Modal -->
+    <div id="movie-modal" class="fixed inset-0 z-[60] hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <!-- Overlay -->
+            <div class="fixed inset-0 bg-black bg-opacity-90 transition-opacity" aria-hidden="true" onclick="app.closeModal()"></div>
+
+            <!-- Modal Panel -->
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-card-bg rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl w-full border border-gray-800 relative">
+                
+                <button onclick="app.closeModal()" class="absolute top-4 right-4 text-white z-10 bg-black/50 rounded-full p-2 hover:bg-neon-pink transition">
+                    <i class="fa-solid fa-times text-xl w-6 h-6 flex items-center justify-center"></i>
+                </button>
+
+                <div id="modal-content" class="text-gray-300">
+                    <!-- Content injected via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login/Signup Modal -->
+    <div id="login-modal" class="fixed inset-0 z-[80] hidden flex items-center justify-center bg-black/90 backdrop-blur-sm">
+        <div class="bg-card-bg p-8 rounded-2xl border border-neon-blue shadow-[0_0_50px_rgba(0,243,255,0.2)] max-w-md w-full relative">
+            <button onclick="app.toggleLoginModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+                <i class="fa-solid fa-times text-xl"></i>
+            </button>
+            
+            <div class="text-center mb-6">
+                <h2 id="auth-title" class="text-2xl font-bold text-white mb-2">Welcome Back</h2>
+                <p id="auth-subtitle" class="text-gray-400 text-sm">Enter your details to access your watchlist from anywhere.</p>
+            </div>
+
+            <form id="auth-form" onsubmit="app.handleAuthForm(event)">
+                <div class="mb-4">
+                    <label class="block text-gray-400 text-xs font-bold mb-2 uppercase">Email</label>
+                    <input type="email" id="auth-email" required class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-neon-blue focus:outline-none placeholder-gray-600" placeholder="you@example.com">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-400 text-xs font-bold mb-2 uppercase">Password</label>
+                    <input type="password" id="auth-password" required class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-neon-blue focus:outline-none placeholder-gray-600" placeholder="••••••••">
+                </div>
+                
+                <button type="submit" id="auth-submit-btn" class="w-full bg-neon-blue text-black font-bold py-3 rounded-lg hover:bg-white transition-colors mb-4">
+                    Sign In
+                </button>
+            </form>
+
+            <div class="text-center text-sm text-gray-400">
+                <span id="auth-switch-text">Don't have an account?</span>
+                <button onclick="app.switchAuthMode()" id="auth-switch-btn" class="text-neon-blue font-bold hover:underline ml-1">Sign Up</button>
+            </div>
+             <div id="auth-error" class="text-red-500 text-center text-xs mt-3 hidden"></div>
+        </div>
+    </div>
+
+    <!-- API Key / Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 z-[70] flex items-center justify-center bg-black/90 backdrop-blur-sm">
+        <div class="bg-card-bg p-8 rounded-2xl border border-neon-blue shadow-[0_0_50px_rgba(0,243,255,0.2)] max-w-md w-full text-center">
+            <i class="fa-solid fa-key text-4xl text-neon-blue mb-4"></i>
+            <h2 class="text-2xl font-bold text-white mb-2">Setup Required</h2>
+            <p class="text-gray-400 mb-6">Enter your TMDb API Key to enable movie data. We save this locally in your browser.</p>
+            
+            <input type="text" id="api-key-input" placeholder="Enter TMDb API Key" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 mb-4 text-white focus:border-neon-blue focus:outline-none">
+            
+            <div class="flex flex-col gap-3">
+                <button onclick="app.saveApiKey()" class="w-full bg-neon-blue text-black font-bold py-3 rounded-lg hover:bg-white transition-colors">
+                    Save API Key
+                </button>
+                <div class="text-gray-500 text-sm">OR</div>
+                <button onclick="app.enableDemoMode()" class="w-full bg-gray-700 border border-gray-600 text-white font-bold py-3 rounded-lg hover:bg-gray-600 transition-colors">
+                    Try Demo Mode (No Key)
+                </button>
+            </div>
+            
+            <p class="mt-4 text-xs text-gray-500">Don't have a key? <a href="https://www.themoviedb.org/documentation/api" target="_blank" class="text-neon-blue underline">Get it here</a>.</p>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-gray-800 border-l-4 border-neon-blue text-white px-6 py-4 rounded shadow-2xl transform translate-y-20 transition-transform duration-300 z-50 flex items-center">
+        <span id="toast-msg">Notification</span>
+    </div>
+
+    <!-- Application Logic (Modular) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, addDoc, deleteDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- 1. CONFIGURATION & STATE ---
+        const CONFIG = {
+            tmdbBaseUrl: 'https://api.themoviedb.org/3',
+            imageBaseUrl: 'https://image.tmdb.org/t/p/w500',
+            backdropBaseUrl: 'https://image.tmdb.org/t/p/original',
+        };
+
+        const STATE = {
+            // Using the key you provided as default
+            apiKey: 'ecd4aa822842c8ea24a4fe1656082a2f',
+            demoMode: false,
+            user: null,
+            watchlist: new Set(),
+            searchHistory: [],
+            currentGenre: null,
+            authMode: 'login' // 'login' or 'signup'
+        };
+
+        // --- 1b. DEMO DATA ---
+        const MOCK_DATA = {
+            movies: [
+                { id: 335984, title: "Blade Runner 2049", release_date: "2017-10-04", vote_average: 7.5, poster_path: "/gajva2L0rPYkEWjzgFlBXCAVBE5.jpg", backdrop_path: "/ilRyASD87jjn3sqf88khRKVQqM6.jpg", overview: "Thirty years after the events of the first film, a new blade runner, LAPD Officer K, unearths a long-buried secret that has the potential to plunge what's left of society into chaos.", genres: [{name:"Science Fiction"},{name:"Drama"}] },
+                { id: 438631, title: "Dune", release_date: "2021-09-15", vote_average: 7.9, poster_path: "/d5NXSklXo0qyIYkgV94XAgMIckC.jpg", backdrop_path: "/jYEW5xZkZk2WTrdbMGAPFuBqbDc.jpg", overview: "Paul Atreides, a brilliant and gifted young man born into a great destiny beyond his understanding, must travel to the most dangerous planet in the universe to ensure the future of his family and his people.", genres: [{name:"Science Fiction"},{name:"Adventure"}] },
+                { id: 27205, title: "Inception", release_date: "2010-07-15", vote_average: 8.4, poster_path: "/9gk7admal4ZLcnwnCSJORyZpgu9.jpg", backdrop_path: "/s3TBrRGB1jav7fwSaGj7ZK0pjsq.jpg", overview: "Caleb, a skilled thief who commits corporate espionage by infiltrating the subconscious of his targets is offered a chance to regain his old life as payment for a task considered to be impossible: \"inception\", the implantation of another person's idea into a target's subconscious.", genres: [{name:"Action"},{name:"Science Fiction"}] },
+                { id: 264660, title: "Ex Machina", release_date: "2015-01-21", vote_average: 7.6, poster_path: "/dm2t339dA6f0bBPb15093J77l1p.jpg", backdrop_path: "/eP5FzI5bQO5Lp8w0lM4qP5Q6Y5.jpg", overview: "Caleb, a 26 year old coder at the world's largest internet company, wins a competition to spend a week at a private mountain retreat belonging to Nathan, the reclusive CEO of the company.", genres: [{name:"Drama"},{name:"Science Fiction"}] },
+                { id: 9355, title: "Mad Max: Fury Road", release_date: "2015-05-13", vote_average: 7.5, poster_path: "/8tZYtuWezpScHoward1Rxpxd.jpg", backdrop_path: "/nlCHUWjFA9LpplmPuucQj7o0oUL.jpg", overview: "An apocalyptic story set in the furthest reaches of our planet, in a stark desert landscape where humanity is broken, and most everyone is crazed fighting for the necessities of life.", genres: [{name:"Action"},{name:"Adventure"}] }
+            ]
+        };
+
+        // --- 2. FIREBASE SETUP (Modular) ---
+        // Using environment variable config to ensure anonymous auth works
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const appInstance = initializeApp(firebaseConfig);
+        const auth = getAuth(appInstance);
+        const db = getFirestore(appInstance);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app';
+
+        // --- 3. DOM ELEMENTS ---
+        const els = {
+            searchInput: document.getElementById('search-input'),
+            searchResults: document.getElementById('search-results'),
+            movieGrid: document.getElementById('movie-grid'),
+            heroBg: document.getElementById('hero-bg'),
+            sectionTitle: document.getElementById('section-title'),
+            loader: document.getElementById('loader'),
+            modal: document.getElementById('movie-modal'),
+            modalContent: document.getElementById('modal-content'),
+            settingsModal: document.getElementById('settings-modal'),
+            loginModal: document.getElementById('login-modal'),
+            toast: document.getElementById('toast'),
+            toastMsg: document.getElementById('toast-msg'),
+            navAuthSection: document.getElementById('nav-auth-section'),
+            authForm: document.getElementById('auth-form'),
+            authTitle: document.getElementById('auth-title'),
+            authSubtitle: document.getElementById('auth-subtitle'),
+            authSubmitBtn: document.getElementById('auth-submit-btn'),
+            authSwitchText: document.getElementById('auth-switch-text'),
+            authSwitchBtn: document.getElementById('auth-switch-btn'),
+            authError: document.getElementById('auth-error')
+        };
+
+        // --- 4. CORE APP LOGIC ---
+
+        const app = {
+            init: async () => {
+                // Check API Key
+                if (!STATE.apiKey && !STATE.demoMode) {
+                    els.settingsModal.classList.remove('hidden');
+                } else {
+                    els.settingsModal.classList.add('hidden');
+                    app.loadTrending();
+                }
+
+                // Auth Listener
+                onAuthStateChanged(auth, async (user) => {
+                    STATE.user = user;
+                    app.updateAuthUI(user);
+                    
+                    if (user) {
+                        console.log("User logged in:", user.uid, user.isAnonymous ? '(Anon)' : '(Email)');
+                        await app.syncFirestore();
+                    } else {
+                        // If no user, default to anonymous login for instant access
+                        app.handleAuth(); 
+                    }
+                });
+
+                // Event Listeners
+                els.searchInput.addEventListener('input', app.debounce(app.handleSearchInput, 500));
+                
+                // Close search results when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!els.searchInput.contains(e.target) && !els.searchResults.contains(e.target)) {
+                        els.searchResults.classList.add('hidden');
+                    }
+                });
+            },
+
+            updateAuthUI: (user) => {
+                if (!user) return;
+
+                if (user.isAnonymous) {
+                     els.navAuthSection.innerHTML = `<button onclick="app.toggleLoginModal()" class="hover:text-neon-blue transition-colors">Login</button>`;
+                     document.getElementById('mobile-login-btn').innerText = "Login";
+                     document.getElementById('mobile-login-btn').onclick = () => { app.toggleLoginModal(); document.getElementById('mobile-menu').classList.add('hidden'); };
+                } else {
+                     const email = user.email || 'User';
+                     els.navAuthSection.innerHTML = `
+                        <span class="text-xs text-gray-400 hidden lg:inline">${email}</span>
+                        <button onclick="app.handleLogout()" class="text-red-400 hover:text-white transition-colors"><i class="fa-solid fa-sign-out-alt"></i></button>
+                     `;
+                     document.getElementById('mobile-login-btn').innerText = "Logout (" + email + ")";
+                     document.getElementById('mobile-login-btn').onclick = () => { app.handleLogout(); document.getElementById('mobile-menu').classList.add('hidden'); };
+                }
+            },
+
+            // --- AUTHENTICATION ---
+            handleAuth: async () => {
+                try {
+                    // Try Custom Token from Environment first
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        try {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } catch (tokenError) {
+                            console.warn("Environment token failed. Falling back to Anonymous Auth.", tokenError);
+                            await signInAnonymously(auth);
+                        }
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (error) {
+                    console.error("Auth Error:", error);
+                    let msg = "Authentication failed";
+                    if (error.code === 'auth/operation-not-allowed' || error.code === 'auth/admin-restricted-operation') {
+                        msg = "Anonymous Sign-in not enabled in Firebase Console";
+                    }
+                    app.showToast(msg, true);
+                }
+            },
+
+            toggleLoginModal: () => {
+                els.loginModal.classList.toggle('hidden');
+                // Reset to login mode when opening
+                if (!els.loginModal.classList.contains('hidden')) {
+                    STATE.authMode = 'login';
+                    app.updateAuthModalUI();
+                    els.authError.classList.add('hidden');
+                }
+            },
+
+            switchAuthMode: () => {
+                STATE.authMode = STATE.authMode === 'login' ? 'signup' : 'login';
+                app.updateAuthModalUI();
+            },
+
+            updateAuthModalUI: () => {
+                els.authError.classList.add('hidden');
+                if (STATE.authMode === 'login') {
+                    els.authTitle.innerText = "Welcome Back";
+                    els.authSubtitle.innerText = "Enter your details to access your watchlist.";
+                    els.authSubmitBtn.innerText = "Sign In";
+                    els.authSwitchText.innerText = "Don't have an account?";
+                    els.authSwitchBtn.innerText = "Sign Up";
+                } else {
+                    els.authTitle.innerText = "Create Account";
+                    els.authSubtitle.innerText = "Start building your personalized movie collection.";
+                    els.authSubmitBtn.innerText = "Sign Up";
+                    els.authSwitchText.innerText = "Already have an account?";
+                    els.authSwitchBtn.innerText = "Sign In";
+                }
+            },
+
+            handleAuthForm: async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('auth-email').value;
+                const password = document.getElementById('auth-password').value;
+                
+                els.authSubmitBtn.disabled = true;
+                els.authSubmitBtn.innerText = "Processing...";
+                els.authError.classList.add('hidden');
+
+                try {
+                    if (STATE.authMode === 'login') {
+                        await signInWithEmailAndPassword(auth, email, password);
+                        app.showToast("Welcome back!");
+                    } else {
+                        await createUserWithEmailAndPassword(auth, email, password);
+                        app.showToast("Account created successfully!");
+                    }
+                    app.toggleLoginModal(); // Close modal on success
+                } catch (error) {
+                    console.error("Auth Form Error:", error);
+                    els.authError.innerText = error.message.replace("Firebase: ", "");
+                    els.authError.classList.remove('hidden');
+                } finally {
+                    els.authSubmitBtn.disabled = false;
+                    els.authSubmitBtn.innerText = STATE.authMode === 'login' ? "Sign In" : "Sign Up";
+                }
+            },
+
+            handleLogout: async () => {
+                try {
+                    await signOut(auth);
+                    app.showToast("Logged out successfully");
+                    // System will auto-trigger handleAuth() via onAuthStateChanged listener to log back in anonymously
+                } catch (error) {
+                    console.error("Logout Error:", error);
+                }
+            },
+
+            syncFirestore: async () => {
+                if (!STATE.user) return;
+                
+                // Load Watchlist: Use modular collection()
+                const watchlistRef = collection(db, 'artifacts', appId, 'users', STATE.user.uid, 'watchlist');
+                
+                onSnapshot(watchlistRef, (snapshot) => {
+                    STATE.watchlist.clear();
+                    snapshot.forEach(doc => {
+                        STATE.watchlist.add(parseInt(doc.id));
+                    });
+                    // Refresh UI if showing watchlist
+                    if (els.sectionTitle.innerText === 'My Watchlist') {
+                        app.renderWatchlist();
+                    }
+                }, (error) => console.log("Firestore sync error", error));
+            },
+
+            // --- API INTERACTION ---
+            fetchData: async (endpoint, params = {}) => {
+                if (STATE.demoMode) return app.getMockData(endpoint, params);
+                if (!STATE.apiKey) return null;
+                
+                const url = new URL(`${CONFIG.tmdbBaseUrl}${endpoint}`);
+                url.searchParams.append('api_key', STATE.apiKey);
+                url.searchParams.append('language', 'en-US');
+                url.searchParams.append('include_adult', 'false');
+                
+                Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+
+                try {
+                    // Added explicit headers to avoid simple CORS failures, though TMDB is permissive.
+                    const res = await fetch(url, {
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+                    if (!res.ok) {
+                         if (res.status === 401) throw new Error('Invalid API Key');
+                         throw new Error(`API Error: ${res.status}`);
+                    }
+                    return await res.json();
+                } catch (err) {
+                    console.warn("API Request Failed:", err.message);
+                    
+                    // If network fails (e.g. invalid key or connection issue), auto-switch to demo to keep app running
+                    if (!STATE.demoMode) {
+                         STATE.demoMode = true;
+                         app.showToast("Network Error. Switched to Demo Mode.", true);
+                    }
+                    
+                    return app.getMockData(endpoint, params);
+                }
+            },
+
+            // --- DEMO MODE LOGIC ---
+            getMockData: (endpoint, params) => {
+                console.log("Using Mock Data for", endpoint);
+                
+                if (endpoint.includes('trending')) {
+                    return { results: MOCK_DATA.movies };
+                }
+                if (endpoint.includes('search')) {
+                    return { results: MOCK_DATA.movies.filter(m => m.title.toLowerCase().includes(params.query?.toLowerCase() || '')) };
+                }
+                const idMatch = endpoint.match(/\/movie\/(\d+)$/);
+                if (idMatch) {
+                    const id = parseInt(idMatch[1]);
+                    const movie = MOCK_DATA.movies.find(m => m.id === id) || MOCK_DATA.movies[0];
+                    return movie;
+                }
+                if (endpoint.includes('recommendations') || endpoint.includes('similar')) {
+                     return { results: MOCK_DATA.movies.slice(0, 3) };
+                }
+                return { results: [] };
+            },
+
+            enableDemoMode: () => {
+                STATE.demoMode = true;
+                els.settingsModal.classList.add('hidden');
+                app.loadTrending();
+                app.showToast("Demo Mode Activated!");
+            },
+
+            saveApiKey: () => {
+                const input = document.getElementById('api-key-input').value.trim();
+                if (input) {
+                    STATE.apiKey = input;
+                    localStorage.setItem('tmdb_api_key', input);
+                    STATE.demoMode = false;
+                    els.settingsModal.classList.add('hidden');
+                    app.loadTrending();
+                    app.showToast("API Key Saved!");
+                }
+            },
+
+            toggleSettings: () => {
+                els.settingsModal.classList.remove('hidden');
+            },
+
+            // --- FEATURE: SEARCH & AUTOCOMPLETE ---
+            debounce: (func, wait) => {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            },
+
+            handleSearchInput: async (e) => {
+                const query = e.target.value.trim();
+                if (query.length < 2) {
+                    els.searchResults.classList.add('hidden');
+                    return;
+                }
+
+                const data = await app.fetchData('/search/movie', { query: query });
+                if (data && data.results) {
+                    app.renderAutocomplete(data.results.slice(0, 5));
+                }
+            },
+
+            renderAutocomplete: (movies) => {
+                els.searchResults.innerHTML = '';
+                if (movies.length === 0) return;
+
+                movies.forEach(movie => {
+                    const year = movie.release_date ? movie.release_date.split('-')[0] : 'N/A';
+                    const poster = movie.poster_path 
+                        ? `${CONFIG.imageBaseUrl}${movie.poster_path}` 
+                        : 'https://via.placeholder.com/50x75/1f2937/ffffff?text=No+Img';
+
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center p-3 hover:bg-gray-800 cursor-pointer transition-colors border-b border-gray-800 last:border-0';
+                    div.innerHTML = `
+                        <img src="${poster}" class="w-10 h-14 object-cover rounded mr-3" alt="${movie.title}">
+                        <div>
+                            <h4 class="font-bold text-sm text-white">${movie.title}</h4>
+                            <p class="text-xs text-gray-400">${year} • <i class="fa-solid fa-star text-yellow-500 text-[10px]"></i> ${movie.vote_average.toFixed(1)}</p>
+                        </div>
+                    `;
+                    div.onclick = () => {
+                        els.searchInput.value = '';
+                        els.searchResults.classList.add('hidden');
+                        app.openDetails(movie.id);
+                        app.addToHistory(movie);
+                    };
+                    els.searchResults.appendChild(div);
+                });
+                els.searchResults.classList.remove('hidden');
+            },
+
+            // --- FEATURE: BROWSING ---
+            loadTrending: async () => {
+                app.setLoading(true);
+                els.sectionTitle.innerText = "Trending Now";
+                const data = await app.fetchData('/trending/movie/week');
+                app.setLoading(false);
+                
+                if (data && data.results && data.results.length > 0) {
+                    const topMovie = data.results[0];
+                    if(topMovie.backdrop_path) {
+                        els.heroBg.style.backgroundImage = `url(${CONFIG.backdropBaseUrl}${topMovie.backdrop_path})`;
+                    }
+                    app.renderGrid(data.results);
+                } else if (!STATE.apiKey && !STATE.demoMode) {
+                    els.movieGrid.innerHTML = '<div class="col-span-full text-center text-red-400">Please enter an API Key or use Demo Mode to see movies.</div>';
+                }
+            },
+
+            loadHome: () => {
+                app.loadTrending();
+                window.scrollTo({top: 0, behavior: 'smooth'});
+            },
+
+            renderWatchlist: async () => {
+                if (!STATE.user) return;
+                app.setLoading(true);
+                els.sectionTitle.innerText = "My Watchlist";
+                els.movieGrid.innerHTML = ''; 
+
+                const movies = [];
+                for (let id of STATE.watchlist) {
+                    const movie = await app.fetchData(`/movie/${id}`);
+                    if (movie) movies.push(movie);
+                }
+                
+                app.setLoading(false);
+                
+                if (movies.length === 0) {
+                    els.movieGrid.innerHTML = '<div class="col-span-full text-center text-gray-500 mt-10">Your watchlist is empty. Go add some movies!</div>';
+                } else {
+                    app.renderGrid(movies);
+                }
+            },
+
+            // --- UI RENDERING ---
+            renderGrid: (movies) => {
+                els.movieGrid.innerHTML = '';
+                movies.forEach((movie, index) => {
+                    if (!movie.poster_path) return;
+
+                    const card = document.createElement('div');
+                    card.className = 'movie-card relative bg-card-bg rounded-xl overflow-hidden cursor-pointer group animate-fade-in';
+                    card.style.animationDelay = `${index * 0.05}s`;
+                    
+                    const poster = `${CONFIG.imageBaseUrl}${movie.poster_path}`;
+                    const ratingColor = movie.vote_average >= 7 ? 'text-green-400' : (movie.vote_average >= 5 ? 'text-yellow-400' : 'text-red-400');
+                    const isWatchlisted = STATE.watchlist.has(movie.id);
+
+                    card.innerHTML = `
+                        <div class="relative aspect-[2/3] overflow-hidden">
+                            <img src="${poster}" alt="${movie.title}" class="w-full h-full object-cover">
+                            <div class="poster-overlay absolute inset-0 flex flex-col justify-end p-4">
+                                <button class="w-full bg-neon-blue text-black font-bold py-2 rounded mb-2 hover:bg-white transition" 
+                                    onclick="event.stopPropagation(); app.openDetails(${movie.id})">
+                                    View Details
+                                </button>
+                            </div>
+                            <div class="absolute top-2 right-2 bg-black/70 px-2 py-1 rounded text-xs font-bold ${ratingColor}">
+                                ${movie.vote_average.toFixed(1)}
+                            </div>
+                        </div>
+                        <div class="p-3">
+                            <h3 class="text-white font-semibold truncate text-sm" title="${movie.title}">${movie.title}</h3>
+                            <div class="flex justify-between items-center mt-1 text-gray-400 text-xs">
+                                <span>${movie.release_date ? movie.release_date.split('-')[0] : 'Unknown'}</span>
+                                <button onclick="event.stopPropagation(); app.toggleWatchlist(${movie.id}, '${movie.title.replace(/'/g, "\\'")}')" class="hover:text-neon-pink transition">
+                                    <i class="${isWatchlisted ? 'fa-solid text-neon-pink' : 'fa-regular'} fa-heart"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    card.onclick = () => app.openDetails(movie.id);
+                    els.movieGrid.appendChild(card);
+                });
+            },
+
+            setLoading: (isLoading) => {
+                if (isLoading) {
+                    els.movieGrid.innerHTML = '';
+                    els.loader.classList.remove('hidden');
+                    // Add skeletons
+                    for(let i=0; i<10; i++) {
+                        const skel = document.createElement('div');
+                        skel.className = 'rounded-xl overflow-hidden aspect-[2/3] skeleton mb-2';
+                        els.movieGrid.appendChild(skel);
+                    }
+                } else {
+                    els.loader.classList.add('hidden');
+                }
+            },
+
+            // --- DETAILS & RECOMMENDATIONS ---
+            openDetails: async (movieId) => {
+                els.modal.classList.remove('hidden');
+                els.modalContent.innerHTML = '<div class="p-10 text-center"><div class="w-10 h-10 border-4 border-neon-blue border-t-transparent rounded-full animate-spin inline-block"></div></div>';
+                
+                const [details, similar] = await Promise.all([
+                    app.fetchData(`/movie/${movieId}`),
+                    app.fetchData(`/movie/${movieId}/recommendations`)
+                ]);
+
+                if (!details) {
+                    els.modalContent.innerHTML = '<div class="p-10 text-center text-red-500">Failed to load details.</div>';
+                    return;
+                }
+
+                // Update Hero BG for immersion
+                if (details.backdrop_path) {
+                    els.heroBg.style.backgroundImage = `url(${CONFIG.backdropBaseUrl}${details.backdrop_path})`;
+                }
+
+                const genres = details.genres ? details.genres.map(g => g.name).join(', ') : '';
+                const isWatchlisted = STATE.watchlist.has(details.id);
+
+                els.modalContent.innerHTML = `
+                    <div class="relative">
+                        <!-- Backdrop Header -->
+                        <div class="h-64 md:h-80 w-full bg-cover bg-center relative" style="background-image: url('${CONFIG.backdropBaseUrl}${details.backdrop_path || details.poster_path}')">
+                            <div class="absolute inset-0 bg-gradient-to-t from-card-bg via-card-bg/50 to-transparent"></div>
+                            <div class="absolute bottom-4 left-4 md:left-8 flex items-end">
+                                <img src="${CONFIG.imageBaseUrl}${details.poster_path}" class="w-24 md:w-32 rounded-lg border-2 border-white shadow-lg hidden sm:block">
+                                <div class="sm:ml-4 mb-1">
+                                    <h2 class="text-3xl md:text-4xl font-bold text-white leading-tight">${details.title}</h2>
+                                    <p class="text-neon-blue font-semibold">${details.tagline || ''}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-4 md:p-8">
+                            <!-- Metadata -->
+                            <div class="flex flex-wrap items-center gap-4 mb-6 text-sm text-gray-400">
+                                <span class="border border-gray-600 px-2 py-0.5 rounded">${details.release_date}</span>
+                                <span>${details.runtime || 'N/A'} min</span>
+                                <span class="text-yellow-500"><i class="fa-solid fa-star"></i> ${details.vote_average.toFixed(1)}</span>
+                                <span class="text-white">${genres}</span>
+                            </div>
+
+                            <!-- Overview -->
+                            <p class="text-gray-300 leading-relaxed text-lg mb-8">${details.overview}</p>
+
+                            <!-- Actions -->
+                            <div class="flex gap-4 mb-10">
+                                <button onclick="app.toggleWatchlist(${details.id}, '${details.title.replace(/'/g, "\\'")}', true)" 
+                                    class="px-6 py-3 rounded-lg font-bold transition flex items-center gap-2 ${isWatchlisted ? 'bg-gray-700 text-white' : 'bg-neon-pink text-black hover:bg-white'}">
+                                    <i class="${isWatchlisted ? 'fa-solid' : 'fa-regular'} fa-heart"></i> ${isWatchlisted ? 'In Watchlist' : 'Add to Watchlist'}
+                                </button>
+                                <a href="https://www.youtube.com/results?search_query=${details.title}+trailer" target="_blank" 
+                                    class="px-6 py-3 border border-gray-600 rounded-lg font-bold text-white hover:border-neon-blue hover:text-neon-blue transition flex items-center gap-2">
+                                    <i class="fa-brands fa-youtube"></i> Trailer
+                                </a>
+                            </div>
+
+                            <!-- Recommendations -->
+                            <h3 class="text-xl font-bold text-white mb-4 border-l-4 border-neon-blue pl-3">More Like This</h3>
+                            <div class="flex gap-4 overflow-x-auto no-scrollbar pb-4" id="rec-scroller">
+                                ${similar && similar.results && similar.results.length > 0 ? similar.results.slice(0, 10).map(m => {
+                                    if(!m.poster_path) return '';
+                                    return `
+                                        <div class="min-w-[120px] w-[120px] cursor-pointer hover:scale-105 transition-transform" onclick="app.openDetails(${m.id})">
+                                            <img src="${CONFIG.imageBaseUrl}${m.poster_path}" class="w-full rounded-lg mb-2">
+                                            <p class="text-xs text-white truncate">${m.title}</p>
+                                        </div>
+                                    `
+                                }).join('') : '<p class="text-gray-500">No specific recommendations found.</p>'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+
+            closeModal: () => {
+                els.modal.classList.add('hidden');
+            },
+
+            // --- FIRESTORE OPERATIONS ---
+            addToHistory: async (movie) => {
+                if (!STATE.user) return;
+                try {
+                    const historyRef = collection(db, 'artifacts', appId, 'users', STATE.user.uid, 'history');
+                    await addDoc(historyRef, {
+                        movieId: movie.id,
+                        title: movie.title,
+                        timestamp: serverTimestamp()
+                    });
+                } catch (e) { console.error("History save failed", e); }
+            },
+
+            toggleWatchlist: async (movieId, title, fromModal = false) => {
+                if (!STATE.user) {
+                    app.showToast("Please wait for login...", true);
+                    return;
+                }
+
+                // Modular: doc() needs specific args: doc(db, collectionPath..., docId)
+                const docRef = doc(db, 'artifacts', appId, 'users', STATE.user.uid, 'watchlist', movieId.toString());
+
+                if (STATE.watchlist.has(movieId)) {
+                    // Remove
+                    try {
+                        await deleteDoc(docRef);
+                        STATE.watchlist.delete(movieId);
+                        app.showToast(`Removed "${title}" from Watchlist`);
+                    } catch (e) { console.error(e); }
+                } else {
+                    // Add
+                    try {
+                        await setDoc(docRef, {
+                            id: movieId,
+                            title: title,
+                            addedAt: serverTimestamp()
+                        });
+                        STATE.watchlist.add(movieId);
+                        app.showToast(`Added "${title}" to Watchlist`);
+                    } catch (e) { console.error(e); }
+                }
+
+                if (fromModal) {
+                    app.openDetails(movieId);
+                } else {
+                    app.renderGrid(Array.from(els.movieGrid.children).map(c => {
+                        const cardTitle = c.querySelector('h3').innerText;
+                        if(cardTitle === title) {
+                            const icon = c.querySelector('.fa-heart');
+                            icon.classList.toggle('fa-solid');
+                            icon.classList.toggle('fa-regular');
+                            icon.classList.toggle('text-neon-pink');
+                        }
+                        return null; 
+                    }).filter(x => false)); 
+                }
+            },
+
+            showToast: (msg, isError = false) => {
+                els.toastMsg.innerText = msg;
+                els.toast.classList.remove('border-neon-blue', 'border-red-500');
+                els.toast.classList.add(isError ? 'border-red-500' : 'border-neon-blue');
+                els.toast.classList.remove('translate-y-20');
+                setTimeout(() => {
+                    els.toast.classList.add('translate-y-20');
+                }, 3000);
+            }
+        };
+
+        // EXPOSE TO WINDOW FOR HTML HANDLERS
+        window.app = app;
+
+        // Init
+        app.init();
+    </script>
+</body>
+</html>
