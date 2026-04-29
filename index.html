@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -78,4 +78,596 @@
 
 </html>
 
+ -->
 
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rate Your Experience</title>
+    <meta name="description" content="Quickly and easily generate and submit a review for our services.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #4CAF50;
+            --primary-hover: #45a049;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-radius: 24px;
+            --spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            --transition: all 0.3s var(--spring);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e0e7ff 0%, #f8fafc 50%, #f1f5f9 100%);
+            transition: background 0.8s ease-in-out;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--text-main);
+            overflow: hidden;
+        }
+
+        body.bg-excellent {
+            background: linear-gradient(135deg, #fef08a 0%, #fef9c3 50%, #dcfce7 100%);
+        }
+        body.bg-good {
+            background: linear-gradient(135deg, #bfdbfe 0%, #eff6ff 50%, #e0e7ff 100%);
+        }
+        body.bg-poor {
+            background: linear-gradient(135deg, #e2e8f0 0%, #f1f5f9 50%, #cbd5e1 100%);
+        }
+
+        #emoji-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .floating-emoji {
+            position: absolute;
+            opacity: 0;
+            animation: floatUp 6s ease-in forwards;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(105vh) scale(0.5) rotate(-20deg); opacity: 0; }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.6; }
+            100% { transform: translateY(-20vh) scale(1.2) rotate(20deg); opacity: 0; }
+        }
+
+        .container {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            max-width: 420px;
+            width: 100%;
+            padding: 40px 30px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0,0,0,0.05);
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            position: relative;
+            min-height: 350px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-main);
+            letter-spacing: -0.5px;
+        }
+
+        p.subtitle {
+            font-size: 15px;
+            color: var(--text-muted);
+            margin-bottom: 25px;
+        }
+
+        .step {
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s var(--spring);
+        }
+
+        .step.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Stars */
+        .stars {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-direction: row-reverse;
+        }
+
+        .stars span {
+            font-size: 50px;
+            cursor: pointer;
+            color: #e2e8f0;
+            transition: all 0.2s var(--spring);
+            line-height: 1;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: inline-block;
+        }
+
+        .stars span:hover,
+        .stars span:hover ~ span,
+        .stars span.active,
+        .stars span.active ~ span {
+            color: #fbbf24;
+            transform: scale(1.2) translateY(-5px);
+            text-shadow: 0 8px 20px rgba(251, 191, 36, 0.5);
+        }
+
+        .stars span:active {
+            transform: scale(0.9);
+        }
+
+        /* Tags Inline */
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .tag-btn {
+            background: white;
+            border: 1px solid #e2e8f0;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .tag-btn:hover {
+            transform: translateY(-2px);
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+
+        .tag-btn.active {
+            background: #e8f0fe;
+            color: #1967d2;
+            border-color: #d2e3fc;
+            transform: scale(1.05);
+        }
+
+        /* Textarea */
+        textarea.main-textarea {
+            width: 100%;
+            height: 120px;
+            padding: 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            font-size: 15px;
+            line-height: 1.5;
+            resize: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            margin-bottom: 20px;
+            background: rgba(255,255,255,0.9);
+            color: var(--text-main);
+        }
+
+        textarea.main-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.15);
+        }
+
+        /* Buttons */
+        .btn-magic {
+            background: #0f172a;
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s var(--spring);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 8px 25px rgba(15, 23, 42, 0.25);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-magic::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 300%;
+            height: 300%;
+            background: rgba(255,255,255,0.1);
+            transform: translate(-50%, -50%) scale(0);
+            border-radius: 50%;
+            transition: transform 0.5s ease;
+        }
+
+        .btn-magic:hover {
+            background: #1e293b;
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.35);
+        }
+
+        .btn-magic:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .btn-magic:hover::after {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .btn-magic svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            padding: 10px;
+            margin-top: 15px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .btn-secondary:hover {
+            color: var(--text-main);
+            text-decoration: underline;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px) scale(0.9);
+            background: #0f172a;
+            color: white;
+            padding: 14px 28px;
+            border-radius: 30px;
+            font-size: 15px;
+            font-weight: 500;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.25);
+            opacity: 0;
+            transition: all 0.5s var(--spring);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0) scale(1);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Dynamic Emoji Background -->
+    <div id="emoji-bg"></div>
+
+    <main class="container">
+        <!-- Step 1: Rating -->
+        <section id="step1" class="step active">
+            <h1>Rate Your Experience</h1>
+            <p class="subtitle">How was your interaction with us?</p>
+            
+            <div class="stars">
+                <span data-value="5" onclick="setRating(5)">★</span>
+                <span data-value="4" onclick="setRating(4)">★</span>
+                <span data-value="3" onclick="setRating(3)">★</span>
+                <span data-value="2" onclick="setRating(2)">★</span>
+                <span data-value="1" onclick="setRating(1)">★</span>
+            </div>
+            
+            <p style="font-size: 13px; color: #94a3b8; margin-top: 15px; font-weight: 500;">Tap a star to continue</p>
+        </section>
+
+        <!-- Step 2: Final Review Text & Actions -->
+        <section id="step2" class="step">
+            <h1>Your Review</h1>
+            
+            <div class="tags" id="inline-tags">
+                <button class="tag-btn" onclick="toggleTag(this)" id="tag-pro">Professional Advice</button>
+                <button class="tag-btn" onclick="toggleTag(this)" id="tag-quick">Quick Response</button>
+                <button class="tag-btn" onclick="toggleTag(this)" id="tag-helpful">Helpful Guidance</button>
+                <button class="tag-btn" onclick="toggleTag(this)" id="tag-exp">Experienced</button>
+                <button class="tag-btn" onclick="toggleTag(this)" id="tag-comm">Good Communication</button>
+            </div>
+            
+            <textarea id="mainReviewText" class="main-textarea" placeholder="Your review will appear here..."></textarea>
+            
+            <button class="btn-magic" onclick="copyAndOpenGoogle()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                Copy & Post on Google
+            </button>
+            
+            <button class="btn-secondary" onclick="resetForm()">Start Over</button>
+        </section>
+    </main>
+
+    <!-- Toast -->
+    <div id="toast" class="toast">
+        <svg style="width: 20px; height: 20px; color: #4CAF50;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        Copied to clipboard!
+    </div>
+
+    <script>
+        let currentRating = 0;
+        let selectedTags = new Set();
+        let emojiInterval = null;
+        const GOOGLE_REVIEW_LINK = "https://search.google.com/local/writereview?placeid=ChIJexhVPQBfVzkRrtomMg5BTCU";
+
+        // Step 1 Logic
+        function setRating(rating) {
+            currentRating = rating;
+            
+            // Visual update
+            const stars = document.querySelectorAll(".stars span");
+            stars.forEach(star => {
+                if(parseInt(star.dataset.value) <= rating) {
+                    star.classList.add('active');
+                } else {
+                    star.classList.remove('active');
+                }
+            });
+
+            // Start continuous emojis & background
+            startEmojiAnimation(rating);
+
+            // Frictionless Flow: Auto-select tags for excellent reviews
+            if (rating >= 4 && selectedTags.size === 0) {
+                document.getElementById('tag-pro').classList.add('active');
+                selectedTags.add('Professional Advice');
+                
+                if (rating === 5) {
+                    document.getElementById('tag-quick').classList.add('active');
+                    selectedTags.add('Quick Response');
+                }
+            }
+
+            // Generate initial text
+            generateReviewText();
+
+            // Move to Step 2 smoothly
+            setTimeout(() => {
+                document.getElementById('step1').classList.remove('active');
+                setTimeout(() => {
+                    document.getElementById('step2').classList.add('active');
+                }, 300);
+            }, 300); 
+        }
+
+        // Dynamic Emojis & Background
+        function startEmojiAnimation(rating) {
+            clearInterval(emojiInterval);
+            
+            const body = document.body;
+            body.className = ''; 
+
+            let emojiArray = [];
+            if (rating >= 4) {
+                body.classList.add('bg-excellent');
+                emojiArray = ['🤩', '⭐', '✨', '💛', '🔥'];
+            } else if (rating === 3) {
+                body.classList.add('bg-good');
+                emojiArray = ['😊', '👍', '🤔', '🌟'];
+            } else {
+                body.classList.add('bg-poor');
+                emojiArray = ['😞', '📉', '😕'];
+            }
+
+            // Initial burst
+            spawnEmojis(6, emojiArray);
+
+            // Continuous spawning
+            emojiInterval = setInterval(() => {
+                spawnEmojis(1, emojiArray);
+            }, 800);
+        }
+
+        function spawnEmojis(count, emojiArray) {
+            const bgContainer = document.getElementById('emoji-bg');
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    const emoji = document.createElement('div');
+                    emoji.className = 'floating-emoji';
+                    emoji.innerText = emojiArray[Math.floor(Math.random() * emojiArray.length)];
+                    
+                    // Randomize position, size, and speed
+                    emoji.style.left = Math.random() * 90 + 'vw';
+                    emoji.style.fontSize = (Math.random() * 2 + 2) + 'rem';
+                    emoji.style.animationDuration = (Math.random() * 3 + 4) + 's';
+                    
+                    bgContainer.appendChild(emoji);
+                    
+                    // Cleanup
+                    setTimeout(() => emoji.remove(), 7000);
+                }, i * 200);
+            }
+        }
+
+        function toggleTag(btn) {
+            btn.classList.toggle("active");
+            const text = btn.innerText;
+            
+            if (selectedTags.has(text)) {
+                selectedTags.delete(text);
+            } else {
+                selectedTags.add(text);
+            }
+            generateReviewText();
+        }
+
+        // Generation logic
+        function generateReviewText() {
+            const tags = Array.from(selectedTags);
+            let review = "";
+            
+            const excellentIntros = [
+                "Had a fantastic experience.",
+                "Highly recommend!",
+                "Absolutely exceptional service.",
+                "Could not be happier with the outcome.",
+                "Five-star service all the way!"
+            ];
+            const goodIntros = [
+                "Good experience overall.",
+                "Solid service and very helpful.",
+                "I was pleased with the service.",
+                "A reliable and positive experience."
+            ];
+            const poorIntros = [
+                "The experience was okay, but needs improvement.",
+                "Not entirely satisfied.",
+                "It was an average experience."
+            ];
+
+            if (currentRating >= 4) {
+                review += excellentIntros[Math.floor(Math.random() * excellentIntros.length)] + " ";
+            } else if (currentRating === 3) {
+                review += goodIntros[Math.floor(Math.random() * goodIntros.length)] + " ";
+            } else if (currentRating > 0) {
+                review += poorIntros[Math.floor(Math.random() * poorIntros.length)] + " ";
+            }
+
+            if (tags.length > 0) {
+                const lowerTags = tags.map(t => t.toLowerCase());
+                if(tags.length === 1) {
+                    const variations = [
+                        `I really appreciated the ${lowerTags[0]}.`,
+                        `The ${lowerTags[0]} stood out the most.`,
+                        `Special shoutout for the ${lowerTags[0]}.`
+                    ];
+                    review += variations[Math.floor(Math.random() * variations.length)];
+                } else if(tags.length === 2) {
+                    review += `What stood out the most was the ${lowerTags[0]} and the ${lowerTags[1]}.`;
+                } else {
+                    const lastTag = lowerTags.pop();
+                    review += `I was extremely impressed by the ${lowerTags.join(', ')}, and the ${lastTag}.`;
+                }
+            }
+
+            if (currentRating === 5) {
+                const closings = [
+                    " Will definitely be coming back!",
+                    " Highly recommended to anyone needing these services.",
+                    " Truly appreciate the dedication.",
+                    " Exceptional quality."
+                ];
+                review += closings[Math.floor(Math.random() * closings.length)];
+            }
+
+            document.getElementById("mainReviewText").value = review.trim();
+        }
+
+        // Copy and Open Google
+        function copyAndOpenGoogle() {
+            const text = document.getElementById("mainReviewText").value;
+            
+            if(!text) {
+                window.open(GOOGLE_REVIEW_LINK, "_blank");
+                return;
+            }
+
+            navigator.clipboard.writeText(text).then(() => {
+                showToast();
+                setTimeout(() => {
+                    window.open(GOOGLE_REVIEW_LINK, "_blank");
+                }, 1000);
+            }).catch(err => {
+                const textArea = document.getElementById("mainReviewText");
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast();
+                    setTimeout(() => {
+                        window.open(GOOGLE_REVIEW_LINK, "_blank");
+                    }, 1000);
+                } catch (e) {
+                    alert("Please manually copy the text, then click OK to go to Google.");
+                    window.open(GOOGLE_REVIEW_LINK, "_blank");
+                }
+            });
+        }
+
+        function showToast() {
+            const toast = document.getElementById("toast");
+            toast.classList.add("show");
+            setTimeout(() => {
+                toast.classList.remove("show");
+            }, 3000);
+        }
+
+        function resetForm() {
+            currentRating = 0;
+            selectedTags.clear();
+            clearInterval(emojiInterval);
+            
+            document.getElementById("mainReviewText").value = "";
+            document.body.className = '';
+            document.getElementById('emoji-bg').innerHTML = '';
+            
+            document.querySelectorAll('.stars span').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tag-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById('step2').classList.remove('active');
+            setTimeout(() => {
+                document.getElementById('step1').classList.add('active');
+            }, 300);
+        }
+    </script>
+
+</body>
+</html>
